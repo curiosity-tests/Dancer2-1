@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: '**'
   schedule:
-    - cron: '42 5 * * *'
+  - cron: '42 5 * * *'
   workflow_dispatch:
 
 # A new push to a branch supersedes any run still going on that branch.
@@ -36,67 +36,67 @@ jobs:
       fail-fast: false
       matrix:
         perl-version:
-          - 'latest'
-          - '5.40'
-          - '5.36-bookworm'
+        - 'latest'
+        - '5.40'
+        - '5.36-bookworm'
 
     container:
       image: perldocker/perl-tester:${{ matrix.perl-version }}     # https://hub.docker.com/r/perldocker/perl-tester
 
     name: Build on Linux with Perl ${{ matrix.perl-version }}
     steps:
-      - uses: actions/checkout@v7
+    - uses: actions/checkout@v7
 
-      - name: Install dependencies
-        run: |
-            perl -v
-            cpanm --notest --force Module::Pluggable
+    - name: Install dependencies
+      run: |
+        perl -v
+        cpanm --notest --force Module::Pluggable
 
-            # HTTP::XSCookies omits Date::Parse from TEST_REQUIRES in its
-            # Makefile.PL, so its `make test` fails on any perl that doesn't
-            # already have TimeDate installed. Remove once upstream ships a fix.
-            cpanm --notest Date::Parse
+        # HTTP::XSCookies omits Date::Parse from TEST_REQUIRES in its
+        # Makefile.PL, so its `make test` fails on any perl that doesn't
+        # already have TimeDate installed. Remove once upstream ships a fix.
+        cpanm --notest Date::Parse
 
-            dzil authordeps --missing | cpanm --notest
+        dzil authordeps --missing | cpanm --notest
 
-            # HTTP::XSCookies (optional) does not compile on perl 5.44+: its
-            # Makefile.PL forces -std=c89, which perl's headers no longer
-            # accept. Fix submitted upstream at <PR URL>. Dancer2 falls back
-            # to its pure-Perl cookie path without it. Remove this filter
-            # once a fixed release is on CPAN.
-            dzil listdeps --author --missing \
-              | grep -v '^HTTP::XSCookies$' \
-              | cpanm --notest
+        # HTTP::XSCookies (optional) does not compile on perl 5.44+: its
+        # Makefile.PL forces -std=c89, which perl's headers no longer
+        # accept. Fix submitted upstream at <PR URL>. Dancer2 falls back
+        # to its pure-Perl cookie path without it. Remove this filter
+        # once a fixed release is on CPAN.
+        dzil listdeps --author --missing \
+          | grep -v '^HTTP::XSCookies$' \
+          | cpanm --notest
 
-      - name: Regular tests
-        run: |
-            dzil test --author --release
+    - name: Regular tests
+      run: |
+        dzil test --author --release
 
 
       # test t/issues/gh-811.t depends on Dancer2::Session::Cookie so it is skipped the first time
       # but it feel cleaner to run the tests once before we install Dancer
-      - name: Install Extra dependencies
-        run: |
-            cpanm --notest Dancer2::Session::Cookie
+    - name: Install Extra dependencies
+      run: |
+        cpanm --notest Dancer2::Session::Cookie
 
-      - name: Full test cycle
-        run: |
-            dzil test --author --release
+    - name: Full test cycle
+      run: |
+        dzil test --author --release
 
-      - name: Create release
-        if: ${{ matrix.perl-version == 'latest' }}
-        run: |
-            # Increase the version number by 0.000001 so in the reports we can be sure we are using the code to be released.
-            perl -i -p -e 's/^version\s*=\s*(\d+\.\d+)/"version = " . ($1 + 0.000001)/e' dist.ini
-            dzil build
+    - name: Create release
+      if: ${{ matrix.perl-version == 'latest' }}
+      run: |
+        # Increase the version number by 0.000001 so in the reports we can be sure we are using the code to be released.
+        perl -i -p -e 's/^version\s*=\s*(\d+\.\d+)/"version = " . ($1 + 0.000001)/e' dist.ini
+        dzil build
 
-      - name: Archive artifacts
-        if: ${{ matrix.perl-version == 'latest' }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: the-dancer
-          path: |
-            Dancer2-*.tar.gz
+    - name: Archive artifacts
+      if: ${{ matrix.perl-version == 'latest' }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: the-dancer
+        path: |
+          Dancer2-*.tar.gz
 
 
   test-on-clean-perl:
@@ -107,9 +107,9 @@ jobs:
       fail-fast: false
       matrix:
         perl-version:
-          - 'latest'
-          - "5.36-bookworm"
-          - "5.20-buster"
+        - 'latest'
+        - "5.36-bookworm"
+        - "5.20-buster"
 #          - "5.28"
 #          - "5.26"
 #          - "5.24"
@@ -124,23 +124,23 @@ jobs:
 
     name: Test Dancer on ${{ matrix.perl-version }}
     steps:
-      - name: Download a single artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: the-dancer
+    - name: Download a single artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: the-dancer
 
-      - name: Install Dancer
-        run: |
-            perl -v
-            cpanm --notest --force Module::Pluggable
+    - name: Install Dancer
+      run: |
+        perl -v
+        cpanm --notest --force Module::Pluggable
 
-            # HTTP::XSCookies omits Date::Parse from TEST_REQUIRES in its
-            # Makefile.PL, so its `make test` fails on any perl that doesn't
-            # already have TimeDate installed. Remove once upstream ships a fix.
-            cpanm --notest Date::Parse
+        # HTTP::XSCookies omits Date::Parse from TEST_REQUIRES in its
+        # Makefile.PL, so its `make test` fails on any perl that doesn't
+        # already have TimeDate installed. Remove once upstream ships a fix.
+        cpanm --notest Date::Parse
 
-            cpanm -v Dancer2-*.tar.gz
-            perl -MDancer2 -e 'print "$Dancer2::VERSION\n"'
+        cpanm -v Dancer2-*.tar.gz
+        perl -MDancer2 -e 'print "$Dancer2::VERSION\n"'
 
 
   test-downstream:
@@ -151,39 +151,39 @@ jobs:
       fail-fast: false
       matrix:
         perl-version:
-          - 'latest'
+        - 'latest'
 
     container:
       image: perldocker/perl-tester:${{ matrix.perl-version }}     # https://hub.docker.com/r/perldocker/perl-tester
 
     name: Test downstream on ${{ matrix.perl-version }}
     steps:
-      - name: Download a single artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: the-dancer
+    - name: Download a single artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: the-dancer
 
-      - name: Install Dancer
-        run: |
-            perl -v
-            cpanm --notest --force Module::Pluggable
-            cpanm -v Dancer2-*.tar.gz
-            perl -MDancer2 -e 'print "$Dancer2::VERSION\n"'
+    - name: Install Dancer
+      run: |
+        perl -v
+        cpanm --notest --force Module::Pluggable
+        cpanm -v Dancer2-*.tar.gz
+        perl -MDancer2 -e 'print "$Dancer2::VERSION\n"'
 
-      - name: Testing selected Plugins
-        run: |
-            cpanm --test-only --verbose Dancer2::Template::Handlebars
-            cpanm --test-only --verbose Dancer2::Session::Cookie
-            cpanm --test-only --verbose Dancer2::Plugin::Email
-            cpanm --test-only --verbose Dancer2::Plugin::DBIC
+    - name: Testing selected Plugins
+      run: |
+        cpanm --test-only --verbose Dancer2::Template::Handlebars
+        cpanm --test-only --verbose Dancer2::Session::Cookie
+        cpanm --test-only --verbose Dancer2::Plugin::Email
+        cpanm --test-only --verbose Dancer2::Plugin::DBIC
 
-      - name: Testing selected downstream modules
-        run: |
-            # cpanm App::Mxpress::PDF #  Couldn't find module or a distribution MetaCPAN::CLient::Pod::PDF
-            # cpanm App::unbelievable
-            # cpanm TT2::Play::Area
-            cpanm App::Notifier::Service
-            cpanm Map::Tube::Server
+    - name: Testing selected downstream modules
+      run: |
+        # cpanm App::Mxpress::PDF #  Couldn't find module or a distribution MetaCPAN::CLient::Pod::PDF
+        # cpanm App::unbelievable
+        # cpanm TT2::Play::Area
+        cpanm App::Notifier::Service
+        cpanm Map::Tube::Server
 
   native:
     needs: build-in-container
@@ -193,57 +193,58 @@ jobs:
         # Windows tests are reporting failures on warnings, and I have no time to figure out why for now.
         # Will resolve and uncomment later.
         #runner: [ubuntu-latest, macos-latest, windows-latest]
-        runner: [ubuntu-latest, macos-latest]
-        perl: [ 'latest' ]
+        runner:
+        - ubuntu-latest
+        perl: ['latest']
 
     runs-on: ${{matrix.runner}}
     name: Native on OS ${{matrix.runner}} Perl ${{matrix.perl}}
 
     steps:
-      - name: Download a single artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: the-dancer
+    - name: Download a single artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: the-dancer
 
-      - name: Set up perl
-        uses: shogo82148/actions-setup-perl@v1
-        with:
-            perl-version: ${{ matrix.perl }}
-            distribution: ${{ ( startsWith( matrix.runner, 'windows-' ) && 'strawberry' ) || 'default' }}
+    - name: Set up perl
+      uses: shogo82148/actions-setup-perl@v1
+      with:
+        perl-version: ${{ matrix.perl }}
+        distribution: ${{ ( startsWith( matrix.runner, 'windows-' ) && 'strawberry' ) || 'default' }}
 
-      - name: Install Dancer on Windows
-        if: ${{ startsWith( matrix.runner, 'windows-' )  }}
-        run: |
-            perl -v
+    - name: Install Dancer on Windows
+      if: ${{ startsWith( matrix.runner, 'windows-' )  }}
+      run: |
+        perl -v
 
-            cpanm --notest --force Module::Pluggable
+        cpanm --notest --force Module::Pluggable
 
-            # Unclear why Test::TCP fails on GitHub Actions on Windows, but this seems to be related:
-            # https://github.com/tokuhirom/Test-TCP/pull/99
-            cpanm --notest Test::TCP
+        # Unclear why Test::TCP fails on GitHub Actions on Windows, but this seems to be related:
+        # https://github.com/tokuhirom/Test-TCP/pull/99
+        cpanm --notest Test::TCP
 
-            # HTTP::XSCookies omits Date::Parse from TEST_REQUIRES in its
-            # Makefile.PL, so its `make test` fails on any perl that doesn't
-            # already have TimeDate installed. Remove once upstream ships a fix.
-            cpanm --notest Date::Parse
+        # HTTP::XSCookies omits Date::Parse from TEST_REQUIRES in its
+        # Makefile.PL, so its `make test` fails on any perl that doesn't
+        # already have TimeDate installed. Remove once upstream ships a fix.
+        cpanm --notest Date::Parse
 
-            dir
-            Set-Content -NoNewline "cpanm --verbose " install.bat
-            Get-ChildItem -Name Dancer2* >> install.bat
-            dir
-            type install.bat
-            .\install.bat
-            perl -MDancer2 -e "print qq{$Dancer2::VERSION\n}"
+        dir
+        Set-Content -NoNewline "cpanm --verbose " install.bat
+        Get-ChildItem -Name Dancer2* >> install.bat
+        dir
+        type install.bat
+        .\install.bat
+        perl -MDancer2 -e "print qq{$Dancer2::VERSION\n}"
 
-      - name: Install Dancer on Linux and OSX
-        if: ${{ ! startsWith( matrix.runner, 'windows-' )  }}
-        run: |
-            cpanm --notest --force Module::Pluggable
+    - name: Install Dancer on Linux and OSX
+      if: ${{ ! startsWith( matrix.runner, 'windows-' )  }}
+      run: |
+        cpanm --notest --force Module::Pluggable
 
-            # HTTP::XSCookies omits Date::Parse from TEST_REQUIRES in its
-            # Makefile.PL, so its `make test` fails on any perl that doesn't
-            # already have TimeDate installed. Remove once upstream ships a fix.
-            cpanm --notest Date::Parse
+        # HTTP::XSCookies omits Date::Parse from TEST_REQUIRES in its
+        # Makefile.PL, so its `make test` fails on any perl that doesn't
+        # already have TimeDate installed. Remove once upstream ships a fix.
+        cpanm --notest Date::Parse
 
-            cpanm Dancer2-*.tar.gz
-            perl -MDancer2 -e 'print qq{$Dancer2::VERSION\n}'
+        cpanm Dancer2-*.tar.gz
+        perl -MDancer2 -e 'print qq{$Dancer2::VERSION\n}'
