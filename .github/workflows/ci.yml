@@ -5,8 +5,6 @@ on:
     branches: '**'
   pull_request:
     branches: '**'
-  schedule:
-  - cron: '42 5 * * *'
   workflow_dispatch:
 
 # A new push to a branch supersedes any run still going on that branch.
